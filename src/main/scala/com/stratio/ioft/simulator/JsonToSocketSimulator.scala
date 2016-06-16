@@ -12,9 +12,14 @@ import scala.io.Source
 
 object JsonToSocketSimulator extends App {
 
-  //val incomingFile = "samples/dronestream_withcontrols.jsons"
-  //val incomingFile = "samples/flight_at_home.jsons"
-  val incomingFile = "samples/parque_berlin_5.jsons"
+  require(args.length == 1,
+    """
+      |Usage: JsonToSocketSimulator /path/to/flightData.jsons
+      |
+      |Example: JsonToSocketSimulator samples/dronestream_withcontrols.jsons
+    """.stripMargin)
+
+  val incomingFile = args.apply(0)
 
   val server = new ServerSocket(7891)
   println(s"Server Address: ${server.getLocalSocketAddress}")
