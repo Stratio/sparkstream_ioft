@@ -43,8 +43,16 @@ object CassandraPersistence extends IOFTConfig {
     }
   }
 
-  def createTable(tableName: String, colNames: Array[String], pk: PrimaryKey, row: Product) = {
-    val schema = inferSchema(colNames, row)
+  /**
+    * Create table (if not exists) in Cassandra in the keyspace ioft.
+    * @param tableName Name of the table.
+    * @param colNames [[Array]] with the name of all the columns.
+    * @param pk [[PrimaryKey]] of the table.
+    * @param firstRow First row of the result. This row is used in order to infer the data types.
+    * @return If everything goes fine, the result will be an empty [[ResultSet]].
+    */
+  def createTable(tableName: String, colNames: Array[String], pk: PrimaryKey, firstRow: Product) = {
+    val schema = inferSchema(colNames, firstRow)
     try {
       val query = s"CREATE TABLE IF NOT EXISTS $IOFTKeyspace.$tableName (${schema.mkString(", ")}, PRIMARY KEY ($pk))"
       //println(s"Query: $query")
@@ -53,7 +61,7 @@ object CassandraPersistence extends IOFTConfig {
       case nhae: NoHostAvailableException => println(s"${nhae.getCustomMessage(1, true, false)}")
       case qee: QueryExecutionException => println(s"${qee.getMessage}")
       case qve: QueryValidationException => println(s"${qve.getMessage}")
-      case other => println(s"Other: $other")
+      case other: Throwable => println(s"Other: $other")
     }
 
   }
@@ -80,7 +88,7 @@ object CassandraPersistence extends IOFTConfig {
       case qee: QueryExecutionException => println(s"${qee.getMessage}")
       case qve: QueryValidationException => println(s"${qve.getMessage}")
       case ufe: UnsupportedFeatureException => println(s"${ufe.getMessage}")
-      case other => println(s"Other: $other")
+      case other: Throwable => println(s"Other: $other")
     }
   }
 
@@ -93,7 +101,7 @@ object CassandraPersistence extends IOFTConfig {
       case qee: QueryExecutionException => println(s"${qee.getMessage}")
       case qve: QueryValidationException => println(s"${qve.getMessage}")
       case ufe: UnsupportedFeatureException => println(s"${ufe.getMessage}")
-      case other => println(s"Other: $other")
+      case other: Throwable => println(s"Other: $other")
     }
   }
 
@@ -107,6 +115,11 @@ object CassandraPersistence extends IOFTConfig {
 
 }
 
+/**
+  * Case class that represents the Primary Key of a Cassandra table.
+  * @param partitionKey [[Array]] with the columns representing the Partition Key.
+  * @param clusteringKey [[Array]] with the columns representing the Clustering Key.
+  */
 case class PrimaryKey(partitionKey: Array[String], clusteringKey: Array[String]){
   override def toString: String = {
     s"(${partitionKey.mkString})${if(clusteringKey.nonEmpty) ","} ${clusteringKey.mkString}"
